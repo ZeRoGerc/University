@@ -5,6 +5,7 @@
  - R - диапозон индексов
  - R' - выражение типа x .. y, где x, y — числа
  - A - вспомогательный терминал означающий ", R'" или ничего
+ - N - число либо переменная
 
 ## Терминалы
  - var
@@ -28,7 +29,9 @@
  - T &rarr; array [ R ] of type ;
  - R &rarr; R' , R
  - R &rarr; R'
- - R' &rarr; number \.\. number
+ - R' &rarr; N \.\. N
+ - N &rarr; number
+ - N &rarr; variable
 
  ## Грамматика без правого ветвления
  - S &rarr; V : T
@@ -37,7 +40,10 @@
  - R &rarr; R' A
  - A &rarr; , R
  - A &rarr; ε
- - R' &rarr; number \.\. number
+ - R' &rarr; N \.\. N
+ - N &rarr; number
+ - N &rarr; variable
+  
 
  
  ## Построение FIRST и FOLLOW
@@ -48,4 +54,5 @@
  | T          | array  | $      |
  | R          | number | ]      |
  | R'         | number | , ]    |
- | A          | , ε    | ]    |
+ | A          | , ε    | ]      |
+ | N          | var number    | , ] ..      |

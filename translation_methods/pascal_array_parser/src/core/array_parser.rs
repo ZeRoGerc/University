@@ -78,9 +78,9 @@ impl<'a> Parser<'a> {
     fn parse_final_range(&mut self) -> Result<Tree, String> {
         let mut children = Vec::new();
 
-        let res = self.check_and_next("number", &mut children, Token::Number)
+        let res = self.parse_bound().and_then(|t| Ok(children.push(t)))
             .and_then(|_| self.check_and_next("..", &mut children, Token::Range))
-            .and_then(|_| self.check_and_next("number", &mut children, Token::Number));
+            .and_then(|_| self.parse_bound().and_then(|t| Ok(children.push(t))));
 
         match res {
             Ok(_) =>
@@ -88,6 +88,29 @@ impl<'a> Parser<'a> {
                     Tree::node("R\'", children),
                     &[Token::Comma, Token::RightBr]
                 ),
+            Err(message) => Err(message)
+        }
+    }
+
+    fn parse_bound(&mut self) -> Result<Tree, String> {
+        match self.analyzer.cur_token() {
+            Ok(Token::Variable) => {
+                self.analyzer.next_token();
+                self.check_follow_and_return(
+                    Tree::node("N", vec![Tree::leaf("variable")]),
+                    &[Token::Comma, Token::RightBr, Token::Range]
+                )
+            },
+            Ok(Token::Number) => {
+                self.analyzer.next_token();
+                self.check_follow_and_return(
+                    Tree::node("N", vec![Tree::leaf("number")]),
+                    &[Token::Comma, Token::RightBr, Token::Range]
+                )
+            },
+            Ok(any) => {
+                Err(format!("Expected {:?} or {:?} but {:?} found", Token::Variable, Token::Number, any))
+            }
             Err(message) => Err(message)
         }
     }

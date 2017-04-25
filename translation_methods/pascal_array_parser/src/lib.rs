@@ -19,6 +19,11 @@ mod tests {
     }
 
     #[test]
+    fn should_accept_variable_bounds() {
+        base_parse_test("var x: array[a..abc] of char;", true);
+    }
+
+    #[test]
     fn should_accept_multidimensional() {
         base_parse_test("var x: array[1..10,1..124] of string;", true);
         base_parse_test("var x: array[1..10,1..124,1..124,1..124,1..124,1..124] of integer;", true);
