@@ -34,6 +34,7 @@ impl<'a> LexicalAnalyzer<'a> {
             '$' => Ok(Token::End),
             ':' => self.next_and_return(Token::Colon),
             ';' => self.next_and_return(Token::Semicolon),
+            ',' => self.next_and_return(Token::Comma),
             '[' => self.next_and_return(Token::LeftBr),
             ']' => self.next_and_return(Token::RightBr),
             '.' => self.read_range(),

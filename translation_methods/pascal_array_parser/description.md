@@ -2,6 +2,9 @@
  - S - правильное объявление массива
  - V - переменная с именем
  - T - тип
+ - R - диапозон индексов
+ - R' - выражение типа x .. y, где x, y — числа
+ - A - вспомогательный терминал означающий ", R'" или ничего
 
 ## Терминалы
  - var
@@ -15,17 +18,34 @@
  - ]
  - :
  - ;
+ - ,
  - ε — пустая строка
  - $ - конец строки
 
 ## Грамматика
  - S &rarr; V : T
  - V &rarr; var variable
- - T &rarr; array [ number \.\. number] of type ;
+ - T &rarr; array [ R ] of type ;
+ - R &rarr; R' , R
+ - R &rarr; R'
+ - R' &rarr; number \.\. number
+
+ ## Грамматика без правого ветвления
+ - S &rarr; V : T
+ - V &rarr; var variable
+ - T &rarr; array [ R ] of type ;
+ - R &rarr; R' A
+ - A &rarr; , R
+ - A &rarr; ε
+ - R' &rarr; number \.\. number
+
  
  ## Построение FIRST и FOLLOW
- | Нетерминал | FIRST | FOLLOW |
- |------------|-------|--------|
- | S          | var   | $      |
- | V          | var   | :      |
- | T          | array | $      |
+ | Нетерминал | FIRST  | FOLLOW |
+ |------------|--------|--------|
+ | S          | var    | $      |
+ | V          | var    | :      |
+ | T          | array  | $      |
+ | R          | number | ]      |
+ | R'         | number | , ]    |
+ | A          | , ε    | ]    |

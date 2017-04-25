@@ -16,97 +16,141 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_s(&mut self) -> Result<Tree, String> {
-        match self.analyzer.cur_token() {
-            Ok(Token::Var) => {
-                let mut children = Vec::new();
+        let mut children = Vec::new();
 
-                let res = self.parse_var();
-                if res.is_err() { return res } else { children.push(res.unwrap()) }
+        let res = self.parse_var().and_then(|t| Ok(children.push(t)))
+            .and_then(|_| self.check_and_next(":", &mut children, Token::Colon))
+            .and_then(|_| self.parse_type().and_then(|t| Ok(children.push(t))));
 
-                let res = self.check_and_next(":", Token::Colon);
-                if res.is_err() { return res } else { children.push(res.unwrap()) }
-
-                let res = self.parse_type();
-                if res.is_err() { return res } else { children.push(res.unwrap()) }
-
-                Ok(Tree::node("S", children))
-            }
-            Ok(any) => Parser::unexpected(Token::Var, any),
+        match res {
+            Ok(_) => self.check_follow_and_return(Tree::node("S", children), &[Token::End]),
             Err(message) => Err(message)
         }
     }
 
     fn parse_var(&mut self) -> Result<Tree, String> {
-        match self.analyzer.cur_token() {
-            Ok(Token::Var) => {
-                let mut children = Vec::new();
-                children.push(Tree::leaf("var"));
+        let mut children = Vec::new();
 
-                self.analyzer.next_token();
+        let res = self.check_and_next("var", &mut children, Token::Var)
+            .and_then(|_| self.check_and_next("variable", &mut children, Token::Variable));
 
-                let res = self.check_and_next("variable", Token::Variable);
-                if res.is_err() { return res } else { children.push(res.unwrap()) }
-
-                return Ok(Tree::node("V", children));
-            }
-            Ok(any) => Parser::unexpected(Token::Var, any),
+        match res {
+            Ok(_) => self.check_follow_and_return(Tree::node("V", children), &[Token::Colon]),
             Err(message) => Err(message)
         }
     }
 
     fn parse_type(&mut self) -> Result<Tree, String> {
-        match self.analyzer.cur_token() {
-            Ok(Token::Array) => {
-                let mut children = Vec::new();
-                children.push(Tree::leaf("array"));
-                self.analyzer.next_token();
+        let mut children = Vec::new();
 
-                let res = self.check_and_next("[", Token::LeftBr);
-                if res.is_err() { return res } else { children.push(res.unwrap()) };
+        let res = self.check_and_next("array", &mut children, Token::Array)
+            .and_then(|_| self.check_and_next("[", &mut children, Token::LeftBr))
+            .and_then(|_| self.parse_range().and_then(|t| Ok(children.push(t))))
+            .and_then(|_| self.check_and_next("]", &mut children, Token::RightBr))
+            .and_then(|_| self.check_and_next("of", &mut children, Token::Of))
+            .and_then(|_| self.check_and_next("type", &mut children, Token::Type))
+            .and_then(|_| self.check_and_next("semicolon", &mut children, Token::Semicolon));
 
-                let res = self.check_and_next("number", Token::Number);
-                if res.is_err() { return res } else { children.push(res.unwrap()) };
-
-                let res = self.check_and_next("..", Token::Range);
-                if res.is_err() { return res } else { children.push(res.unwrap()) };
-
-                let res = self.check_and_next("number", Token::Number);
-                if res.is_err() { return res } else { children.push(res.unwrap()) };
-
-                let res = self.check_and_next("]", Token::RightBr);
-                if res.is_err() { return res } else { children.push(res.unwrap()) };
-
-                let res = self.check_and_next("of", Token::Of);
-                if res.is_err() { return res } else { children.push(res.unwrap()) };
-
-                let res = self.check_and_next("type", Token::Type);
-                if res.is_err() { return res } else { children.push(res.unwrap()) };
-
-                let res = self.check_and_next("semicolon", Token::Semicolon);
-                if res.is_err() { return res } else { children.push(res.unwrap()) };
-
-                Ok(Tree::node("T", children))
-            }
-            Ok(any) => Parser::unexpected(Token::Array, any),
+        match res {
+            Ok(_) => self.check_follow_and_return(Tree::node("T", children), &[Token::End]),
             Err(message) => Err(message)
         }
     }
 
-    fn check_and_next(&mut self, node: &str, need: Token) -> Result<Tree, String> {
+    fn parse_range(&mut self) -> Result<Tree, String> {
+        let mut children = Vec::new();
+
+        let res = self.parse_final_range()
+            .and_then(|t| {
+                children.push(t);
+                self.parse_comma_separated()
+            })
+            .and_then(|t| {
+                Ok(children.push(t))
+            });
+
+        match res {
+            Ok(_) => self.check_follow_and_return(Tree::node("R", children), &[Token::RightBr]),
+            Err(message) => Err(message)
+        }
+    }
+
+    fn parse_final_range(&mut self) -> Result<Tree, String> {
+        let mut children = Vec::new();
+
+        let res = self.check_and_next("number", &mut children, Token::Number)
+            .and_then(|_| self.check_and_next("..", &mut children, Token::Range))
+            .and_then(|_| self.check_and_next("number", &mut children, Token::Number));
+
+        match res {
+            Ok(_) =>
+                self.check_follow_and_return(
+                    Tree::node("R\'", children),
+                    &[Token::Comma, Token::RightBr]
+                ),
+            Err(message) => Err(message)
+        }
+    }
+
+    fn parse_comma_separated(&mut self) -> Result<Tree, String> {
+        let mut children = Vec::new();
+
+        match self.analyzer.cur_token() {
+            Ok(Token::Comma) => {
+                children.push(Tree::leaf(","));
+                self.analyzer.next_token();
+
+                let res = self.parse_range()
+                    .and_then(|t| Ok(children.push(t)));
+
+                match res {
+                    Ok(_) => {
+                        self.check_follow_and_return(
+                            Tree::node("A", children),
+                            &[Token::RightBr]
+                        )
+                    }
+                    Err(message) => Err(message)
+                }
+            }
+            Ok(Token::RightBr) =>
+                self.check_follow_and_return(
+                    Tree::node("A", vec![Tree::leaf("ε")]),
+                    &[Token::RightBr]
+                ),
+            Ok(any) => Parser::expected_but(Token::RightBr, any),
+            Err(message) => Err(message)
+        }
+    }
+
+    fn check_and_next(&mut self, node: &str, children: &mut Vec<Tree>, need: Token) -> Result<Tree, String> {
         match self.analyzer.cur_token() {
             Ok(token) => {
                 self.analyzer.next_token();
                 if token == need {
+                    children.push(Tree::leaf(node));
                     return Ok(Tree::leaf(node))
                 }
-                Parser::unexpected(need, token)
+                Parser::expected_but(need, token)
             }
             Err(message) => Err(message)
         }
     }
 
+    fn check_follow_and_return(&self, tree: Tree, follow: &[Token]) -> Result<Tree, String> {
+        match self.analyzer.cur_token() {
+            Ok(token) => {
+                for t in follow {
+                    if token == *t { return Ok(tree) }
+                }
 
-    fn unexpected(need: Token, actual: Token) -> Result<Tree, String> {
+                Err(format!("Expected one of {:?} but {:?} found", follow, token))
+            }
+            Err(message) => Err(message)
+        }
+    }
+
+    fn expected_but(need: Token, actual: Token) -> Result<Tree, String> {
         Err(format!("Expected token {:?} but {:?} found", need, actual))
     }
 }

@@ -11,8 +11,15 @@ lazy_static! {
         let mut t = HashSet::new();
         t.insert("byte");
         t.insert("integer");
+        t.insert("longint");
+        t.insert("int64");
+        t.insert("qword");
+
         t.insert("real");
         t.insert("double");
+        t.insert("extended");
+
+        t.insert("boolean");
         t.insert("string");
         t.insert("char");
         t
@@ -31,6 +38,7 @@ pub enum Token {
     LeftBr,
     RightBr,
     Number,
+    Comma,
     Semicolon,
     End,
 }
