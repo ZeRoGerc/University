@@ -1,0 +1,111 @@
+returnSmth :: Int -> Bool -> Int;
+returnSmth n True = -n + 3;
+returnSmth n False = -n;
+
+isMinusOne :: Int -> Bool;
+isMinusOne -1 = True;
+isMinusOne n = False;
+
+isMinusTen :: Int -> Bool;
+isMinusTen -10 = True;
+isMinusTen n = False;
+
+doubleMe :: Int -> Int;
+doubleMe x = x + x;
+
+doubleUs :: Int -> Int -> Int;
+doubleUs x y = (doubleMe x) + (doubleMe y);
+
+first :: Int -> Int -> Int;
+first x y = x;
+
+second :: Int -> Int -> Int;
+second x y = y;
+
+fact :: Int -> Int;
+fact 0 = 1;
+fact n = n * (fact n - 1);
+
+findRecursively :: Int -> Int -> Bool;
+findRecursively n 1 = False;
+findRecursively n d = (n % d == 0) || (findRecursively n d - 1);
+
+isPrime :: Int -> Bool;
+isPrime n = !(findRecursively n n - 1);
+
+doubleSmallNumber :: Int -> Int;
+doubleSmallNumber x =
+    if x > 100 {
+        x
+    } else {
+        x * 2
+    };
+
+factHelper :: Int -> Bool -> Int;
+factHelper n True = n;
+factHelper n False =
+    if n == 0 {
+        1
+    } else {
+        if n > 2 {
+            n * (factHelper n - 1 False)
+        } else {
+            (factHelper n True)
+        }
+    };
+
+hardFact :: Int -> Int;
+hardFact n = (factHelper n False);
+
+findRecIf :: Int -> Int -> Bool;
+findRecIf n d =
+    if d <= 1 {
+        False
+    } else {
+        (n % d == 0) || (findRecIf n d - 1)
+    };
+
+ifPrime :: Int -> Bool;
+ifPrime n = !(findRecIf n n - 1);
+
+fibHelper :: Int -> Int -> Int -> Int;
+fibHelper x y 0 = y;
+fibHelper x y d = (fibHelper y x + y d - 1);
+
+fib :: Int -> Int;
+fib 0 = 0;
+fib n = (fibHelper 0 1 n - 1);
+
+compPoints :: Int -> Int -> Int -> Int -> Int;
+compPoints x1 y1 x2 y2 =
+    if x1 != x2 {
+        if x1 < x2 {
+            -1
+        } else {
+            1
+        }
+    } else {
+        if y1 != y2 {
+            if y1 < y2 {
+                -1
+            } else {
+                1
+            }
+        } else {
+            0
+        }
+    };
+
+add :: Int -> Int -> Int;
+add x y = x + y;
+
+diff :: Int -> Int -> Int;
+diff x y = x - y;
+
+transform :: Int -> Int -> Bool -> Int;
+transform x y isAdd =
+        if !isAdd {
+            (diff x y)
+        } else {
+            (add x y)
+        };

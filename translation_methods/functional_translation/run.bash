@@ -1,0 +1,1 @@
+python -i ./src/main/java/translated.py
