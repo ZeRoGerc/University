@@ -1,0 +1,15 @@
+// Automata for coder
+digraph {
+	00 [label=00]
+	01 [label=01]
+	10 [label=10]
+	11 [label=11]
+	00 -> 00 [label="00 (0)"]
+	00 -> 10 [label="11 (1)"]
+	01 -> 00 [label="11 (0)"]
+	01 -> 10 [label="00 (1)"]
+	10 -> 01 [label="01 (0)"]
+	10 -> 11 [label="10 (1)"]
+	11 -> 01 [label="10 (0)"]
+	11 -> 11 [label="01 (1)"]
+}

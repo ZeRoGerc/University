@@ -1,0 +1,20 @@
+CREATE TABLE task (
+    _id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    done INTEGER NOT NULL,
+    list_id INTEGER NOT NULL
+);
+
+selectByList:
+SELECT *
+FROM task
+WHERE list_id = ?;
+
+addTask:
+INSERT INTO task(text, done, list_id)
+VALUES (?, 0, ?);
+
+markDone:
+UPDATE task
+SET done = ?
+WHERE _id = ?;

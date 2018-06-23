@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">ToDoList</string>
+
+    <string name="task_lists_add_button_text">Add</string>
+    <string name="task_lists_new_title_hint">Enter new task list here</string>
+
+    <string name="tasks_new_title_hint">Enter new task here</string>
+</resources>

@@ -1,0 +1,329 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[document]{ragged2e}
+\usepackage[russian]{babel}
+\usepackage{listings}
+
+
+% make sections without numbers
+\makeatletter
+% we use \prefix@<level> only if it is defined
+\renewcommand{\@seccntformat}[1]{%
+  \ifcsname prefix@#1\endcsname
+    \csname prefix@#1\endcsname
+  \else
+    \csname the#1\endcsname\quad
+  \fi}
+% define \prefix@section
+\newcommand\prefix@section{}
+\makeatother
+
+\title{Домашнее задание 6}
+\author{Владислав Сазанович М3439}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+
+
+\section{Задача 1}
+
+\subsection{Кортежи}
+\begin{lstlisting}[mathescape=true]
+S where $\exists$M $\exists$C
+    (S.SId = M.SId $\land$ C.CId = M.CId $\land$ C.CN = "Databases" $\land$ M.M = PARAM)
+\end{lstlisting}
+
+\subsection{Datalog}
+\begin{lstlisting}[mathescape=true]
+StudentsWithMark(SId, SN, GId) :-
+    S(SId, SN, GId),
+    M(SId, CId, PARAM)
+    C(CId, "Databases")
+\end{lstlisting}
+
+\subsection{SQL}
+\begin{lstlisting}
+select * from S
+where S.SId in (
+    select M.SId from M where M.M = PARAM
+    and M.CId in (select C.CId from C where C.CN = "Databases"));
+\end{lstlisting}
+
+
+
+\section{Задача 2}
+
+\subsection{Кортежи}
+\begin{lstlisting}[mathescape=true]
+S where
+    $\neg\exists$M (M.SId = S.SId  $\land$ ($\exists$C (M.CId = C.CId $\land$ C.CN = "Databases")))
+
+S where
+    $\exists$P $\exists$C (S.GId = P.GId $\land$ P.CId = C.CId $\land$ C.CN = "Databases")
+    $\land\ \neg\exists$M (M.SId = S.SId $\land$($\exists$C (M.CId = C.CId $\land$ C.CN = "Databases")))
+
+\end{lstlisting}
+
+\subsection{Datalog}
+\begin{lstlisting}[mathescape=true]
+StudentsWithoutMarkAll(SId, SN, GId) :-
+    S(SId, SN, GId),
+    C(CId, "Databases"),
+    $\neg$M(SId, CId, _);
+
+StudentsWithoutMarkPlanned(SId, SN, GId) :-
+    S(SId, SN, GId),
+    P(GId, CId, LId),
+    C(CId, "Databases"),
+    $\neg$M(SId, CId, _);
+\end{lstlisting}
+
+\subsection{SQL}
+\begin{lstlisting}[mathescape=true]
+select * from S
+where
+    S.SId not in (
+        select M.SId from M
+        where M.CId in (select C.CId from C where C.CN = "Databases"));
+
+select * from S
+where
+    S.GId in (
+        select P.GId from P
+        where P.CId in (select C.CId from C where C.CN = "Databases"))
+    and S.SId not in (
+        select M.SId from M
+        where M.CId in (select C.CId from C where C.CN ="Databases"));
+\end{lstlisting}
+
+
+
+\section{Задача 3}
+
+\subsection{Кортежи}
+\begin{lstlisting}[mathescape=true]
+S where
+    $\exists$M $\exists$P(S.SId = M.SId $\land$ M.CId = P.CId $\land$ P.LId = PARAM)
+\end{lstlisting}
+
+\subsection{Datalog}
+\begin{lstlisting}[mathescape=true]
+StudentsWithLecturerMark(SId, SN, GId) :-
+    S(SId, SN, GId),
+    P(GId, CId, PARAM),
+    M(SId, CId, _)
+\end{lstlisting}
+
+
+\subsection{SQL}
+\begin{lstlisting}[mathescape=true]
+select * from S
+where S.SId in
+    (select M.SId from M
+     where M.CId in (select P.CId from P where P.LId = PARAM))
+\end{lstlisting}
+
+
+
+\section{Задача 4}
+
+\subsection{Кортежи}
+\begin{lstlisting}[mathescape=true]
+select S.SId from S
+where
+    $\neg\exists$M ($\exists$P(S.SId = M.SId $\land$ P.LId = PARAM $\land$ M.CId = P.CId)
+\end{lstlisting}
+
+\subsection{Datalog}
+\begin{lstlisting}[mathescape=true]
+StudentsWithoutLecturerMark(SId) :-
+    S(SId, SN, GId),
+    P(GId, CId, PARAM),
+    $\neg$M(SId, CId, PARAM)
+\end{lstlisting}
+
+
+\subsection{SQL}
+\begin{lstlisting}[mathescape=true]
+select S.SId from S
+where S.SId not in
+    (select M.SId from M
+     where M.CId in (select P.CId from P where P.LId = PARAM));
+\end{lstlisting}
+
+
+
+\section{Задача 5}
+
+\subsection{Кортежи}
+\begin{lstlisting}[mathescape=true]
+S where
+    $\forall$ CL :: (C where ($\exists$P(P.CId = C.CId $\land$ P.LId = PARAM)))
+    ($\exists$ M (M.SId = S.SId $\land$ M.CId = CL.CId));
+\end{lstlisting}
+
+\subsection{Datalog}
+\begin{lstlisting}[mathescape=true]
+ExistsNotPassed(SId, LId) :-
+    S(SId, SN, GId),
+    P(GId, CId, LId)
+    $\neg$M(SId, CId, _)
+
+CertifiedStudents(SId, SN, GId) :-
+    S(SId, SN, GId),
+    P(_, CId, PARAM),
+    $\neg$ExistsNotPassed(SId, PARAM)
+\end{lstlisting}
+
+
+\subsection{SQL}
+\begin{lstlisting}[mathescape=true]
+select * from S
+where not exists
+    (select * from C
+     where
+        C.CId in (select P.CId from P where P.LId = PARAM)
+        and not exists
+            (select * from M where M.SId = S.SId and M.CId = C.CId));
+\end{lstlisting}
+
+
+
+\section{Задача 6}
+
+\subsection{Кортежи}
+\begin{lstlisting}[mathescape=true]
+select S.SId, S.SName, P.CId from S, P
+where (P.GId = S.GId);
+\end{lstlisting}
+
+\subsection{Datalog}
+\begin{lstlisting}[mathescape=true]
+StudentCourses(SId, SN, CId) :-
+    S(SId, SN, GId),
+    P(GId, CId, _)
+\end{lstlisting}
+
+\subsection{SQL}
+\begin{lstlisting}[mathescape=true]
+select S.SId, S.SName, P.CId from S, P
+where S.GId = P.GId;
+\end{lstlisting}
+
+
+
+\section{Задача 7}
+
+\subsection{Кортежи}
+\begin{lstlisting}[mathescape=true]
+S where $\exists$P (P.GId = S.GId $\land$ P.LId = PARAM)
+\end{lstlisting}
+
+\subsection{Datalog}
+\begin{lstlisting}[mathescape=true]
+StudentsOfLecturer(SId, SN, GId) :-
+    S(SId, SN, GId),
+    P(GId, _, PARAM)
+\end{lstlisting}
+
+
+\subsection{SQL}
+\begin{lstlisting}[mathescape=true]
+select * from S
+where S.GId in (select P.GId from P where P.LId = PARAM);
+\end{lstlisting}
+
+
+
+\section{Задача 8}
+
+\subsection{Кортежи}
+\begin{lstlisting}[mathescape=true]
+select * from S1 :: S, S2 :: S
+where
+    $\forall$ PASS_S1 ::
+        (select M.CId from M where M.SId = S1.SId $\land$ M.M >= 60)
+    $\exists$ M (M.SId = S2.SId $\land$ M.CId = PASS_S1.CId $\land$ M.M >= 60)
+\end{lstlisting}
+
+\subsection{Datalog}
+\begin{lstlisting}[mathescape=true]
+Passed(SId, CId) :-
+    S(SId, _, _)
+    C(CId, _),
+    M(SId, CId, M),
+    M >= 60
+
+FirstPassedSecondNot(SId1, SId2, CId) :-
+    S(SId1, _, _),
+    S(SId2, _, _),
+    C(CId, _),
+    Passed(SId1, CId),
+    $\neg$Passed(SId2, CId)
+
+SecondPassedNotLess(SId1, SN1, GId1, SId2, SN2, GId2) :-
+    S(SId1, SN1, GId1),
+    S(SId2, SN2, GId2),
+    C(CId, _),
+    $\neg$FirstPassedSecondNot(SId1, SId2, CId)
+\end{lstlisting}
+
+\subsection{SQL}
+\begin{lstlisting}[mathescape=true]
+select * from S as S1, S as S2
+where not exists
+    (select M.CId from M
+     where
+        M.SId = S1.SId
+        and M.M >= 60
+        and M.CId not in
+            (select M.CId from M where M.SId = S2.SId and M.M >= 60));
+\end{lstlisting}
+
+
+
+\section{Задача 9}
+
+\subsection{Кортежи}
+\begin{lstlisting}[mathescape=true]
+select P.GId, P.CId from P
+where
+    $\forall$ GS :: (select * from S where S.GId = P.GId)
+    $\exists$M (M.SId = GS.SId $\land$ M.CId = P.CId $\land$ M.M >= 60)
+\end{lstlisting}
+
+\subsection{Datalog}
+\begin{lstlisting}[mathescape=true]
+Passed(SId, CId) :-
+    S(SId, _, _)
+    C(CId, _),
+    M(SId, CId, M),
+    M >= 60
+
+ExistsNotPasses(GId, CId) :-
+    S(SId, _, GId),
+    P(GId, CId, _),
+    $\neg$Passed(SId, CId)
+
+GroupPassed(GId, CId) :-
+    S(SId, _, GId),
+    P(GId, CId, _),
+    $\neg$ExistsNotPasses(GId, CId)
+\end{lstlisting}
+
+
+\subsection{SQL}
+\begin{lstlisting}[mathescape=true]
+select P.GId, P.CId from P
+where not exists
+    (select * from S
+     where S.GId = P.GId
+     and not exists
+        (select * from M
+         where M.SId = S.SId and M.CId = P.CId and M.M >= 60));
+\end{lstlisting}
+
+\end{document}
