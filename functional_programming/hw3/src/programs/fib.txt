@@ -1,0 +1,9 @@
+> n
+mut x1 = 0
+mut x2 = 1
+for i = 1 to n {
+    mut temp = x1 + x2
+    x1 = x2
+    x2 = temp
+}
+< x2
